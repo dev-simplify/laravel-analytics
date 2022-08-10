@@ -29,6 +29,34 @@ class Analytics
     {
         return $this->viewId;
     }
+    
+    public function fetchActiveUsers()
+    {
+        return $this->getAnalyticsService()->data_realtime->get(
+                'ga:'.$this->viewId,
+                'rt:activeVisitors'
+            )->totalsForAllResults['rt:activeVisitors'];
+    }
+
+    public function fetchTopKeywords(Period $period, $maxResults = 30)
+    {
+        $keywordData = [];
+        $response = $this->performQuery(
+            $period,
+            'ga:sessions',
+            [
+                'dimensions' => 'ga:keyword',
+                'sort' => '-ga:sessions',
+                'max-results' => $maxResults,
+                'filters' => 'ga:keyword!=(not set);ga:keyword!=(not provided)'
+            ]
+        );
+
+        return collect($response->rows)->map(fn (array $pageRow) => [
+            'keyword' => $pageRow[0],
+            'sessions' => $pageRow[1],
+        ]);
+    }
 
     public function fetchVisitorsAndPageViews(Period $period): Collection
     {
